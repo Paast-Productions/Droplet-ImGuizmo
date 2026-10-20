@@ -678,7 +678,7 @@ namespace IMGUIZMO_NAMESPACE
 
    struct Context
    {
-      Context() : mbUsing(false), mbUsingViewManipulate(false), mbEnable(true), mIsViewManipulatorHovered(false), mbUsingBounds(false)
+      Context() : mbUsing(false), mbUsingViewManipulate(false), mbEnable(true), mIsViewManipulatorHovered(false), mbUsingBounds(false), mOverBigBoundsAnchor(false), mOverSmallBoundsAnchor(false)
       {
       }
 
@@ -753,6 +753,10 @@ namespace IMGUIZMO_NAMESPACE
       int mBoundsBestAxis;
       int mBoundsAxis[2];
       bool mbUsingBounds;
+      bool mOverBigBoundsAnchor;
+      bool mOverSmallBoundsAnchor;
+      bool mOverBigBoundsAnchorLastFrame;
+      bool mOverSmallBoundsAnchorLastFrame;
       matrix_t mBoundsMatrix;
 
       //
@@ -1081,7 +1085,11 @@ namespace IMGUIZMO_NAMESPACE
       ImGui::Begin("gizmo", NULL, flags);
       gContext.mDrawList = ImGui::GetWindowDrawList();
       gContext.mbOverGizmoHotspotLastFrame = gContext.mbOverGizmoHotspot;
+      gContext.mOverBigBoundsAnchorLastFrame = gContext.mOverBigBoundsAnchor;
+      gContext.mOverSmallBoundsAnchorLastFrame = gContext.mOverSmallBoundsAnchor;
       gContext.mbOverGizmoHotspot = false;
+      gContext.mOverBigBoundsAnchor = false;
+      gContext.mOverSmallBoundsAnchor = false;
       // view manipulate flags accumulate across every ViewManipulate call of the frame
       gContext.mbUsingViewManipulate = false;
       gContext.mIsViewManipulatorHovered = false;
@@ -1140,6 +1148,27 @@ namespace IMGUIZMO_NAMESPACE
       return false;
    }
 
+   bool IsOverBounds()
+   {
+	   if (gContext.mbUsingBounds)
+	   {
+		   return true;
+	   }
+       if (gContext.mOverBigBoundsAnchorLastFrame || gContext.mOverBigBoundsAnchor)
+       {
+           return true;
+       }
+       if (gContext.mOverSmallBoundsAnchorLastFrame || gContext.mOverSmallBoundsAnchor)
+       {
+           return true;
+       }
+       if (GetMoveType(BOUNDS, NULL) != MT_NONE)
+       {
+           return true;
+       }
+	   return false;
+   }
+
    MOVETYPE GetActiveHandleType()
    {
       if (!gContext.mbUsing || gContext.GetCurrentID() != gContext.mEditingID)
@@ -1176,6 +1205,8 @@ namespace IMGUIZMO_NAMESPACE
          {
             gContext.mbUsing = false;
             gContext.mbUsingBounds = false;
+            gContext.mOverBigBoundsAnchor = false;
+            gContext.mOverSmallBoundsAnchor = false;
             gContext.mCurrentHandleType = MT_NONE;
             gContext.mHoveredHandleType = MT_NONE;
          }
@@ -1793,6 +1824,8 @@ namespace IMGUIZMO_NAMESPACE
       ImDrawList* drawList = gContext.mDrawList;
 
       bool manipulated = false;
+	  gContext.mOverBigBoundsAnchor = false;
+	  gContext.mOverSmallBoundsAnchor = false;
 
       // compute best projection axis
       vec_t axesWorldDirections[3];
@@ -1964,6 +1997,9 @@ namespace IMGUIZMO_NAMESPACE
                overBigAnchor = false;
                overSmallAnchor = false;
             }
+
+            gContext.mOverBigBoundsAnchor |= overBigAnchor;
+            gContext.mOverSmallBoundsAnchor |= overSmallAnchor;
 
             ImU32 selectionColor = GetColorU32(SELECTION);
 

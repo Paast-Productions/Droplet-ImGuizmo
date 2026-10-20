@@ -136,6 +136,9 @@ namespace IMGUIZMO_NAMESPACE
    // return true if mouse cursor is over any gizmo control (axis, plan or screen component)
    IMGUI_API bool IsOver();
 
+   // return true if mouse cursor is over the bounds gizmo control (the box surrounding the gizmo)
+   IMGUI_API bool IsOverBounds();
+
    // return true if mouse IsOver or if the gizmo is in moving state
    IMGUI_API bool IsUsing();
 
